@@ -172,7 +172,6 @@ exports.call = function(endpoint, params, page, cb) {
     noFail: true,       // Don't throw on HTTP errors (400- status code)
     compression: true,  // Will send 'Accept-Encoding: gzip' in request
     caching: true,      // Enables Movian's built-in HTTP cache
-    debug: true,
   };
 
   http.request(URL, opts, function(err, result) {
