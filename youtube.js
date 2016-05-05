@@ -34,10 +34,12 @@ Duktape.modSearch = function(a, b, c, d) {
 }
 
 
+var REGION = 'us';
 var PREFIX = "youtube";
 var UA = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:15.0) Gecko/20100101 Firefox/15.0.1'
 var page = require('showtime/page');
 var io = require('native/io'); // XXX: Bad to require('native/')
+var prop = require('showtime/prop');
 
 io.httpInspectorCreate('https://www.youtube.com/.*', function(ctrl) {
   ctrl.setHeader('User-Agent', UA);
@@ -49,11 +51,15 @@ io.httpInspectorCreate('https://www.youtube.com/.*', function(ctrl) {
 /*
  * Get ISO 3166-1 Alpha 2 region code.
  * Movian stores this in the global property tree.
- * Return 'US' if it's not set (for whatever reason)
  */
-function getRegion() {
-  return require('showtime/prop').global.location.cc || 'US';
-}
+prop.subscribeValue(prop.global.location.cc, function(value) {
+  if(typeof value === 'string') {
+    REGION = value;
+    console.log("Region set to " + value);
+  }
+});
+
+
 
 
 function oprint(o) {
@@ -116,7 +122,7 @@ new page.Route(PREFIX + ":categories", function(page) {
   page.metadata.title = 'Categories';
   page.metadata.icon = Plugin.path + 'youtube.svg';
   require('./browse').browse('videoCategories', page, {
-    regionCode: getRegion()
+    regionCode: REGION
   });
 });
 
@@ -226,7 +232,7 @@ new page.Route(PREFIX + ":start", function(page) {
 
   require('./api').call('guideCategories', {
     part: 'snippet',
-    regionCode: getRegion()
+    regionCode: REGION
   }, null, function(result) {
 
     for(var x in result.items) {

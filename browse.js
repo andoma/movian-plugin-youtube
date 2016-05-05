@@ -175,7 +175,7 @@ exports.browse = function(endpoint, page, query) {
 
 
 exports.search = function(page, query) {
-  query.regionCode = getRegion();
+  query.regionCode = REGION;
 
   page.loading = true;
   page.type = 'directory';
