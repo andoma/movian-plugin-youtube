@@ -1,9 +1,9 @@
 {
-  "description": "<p>The best resource available on the Internet for Video sharing.<p>",
+  "description": "The best resource available on the Internet for Video sharing.",
   "author": "Andreas Smas",
   "title": "Youtube",
   "synopsis": "Youtube: Broadcast Yourself",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "file": "youtube.js",
   "showtimeVersion": "5.0.156",
   "type": "ecmascript",

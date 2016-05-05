@@ -120,7 +120,7 @@ function populatePageFromResults(page, result) {
 
     require('./api').call('videos', {
       id: allvideos.join(),
-      part: 'snippet,contentDetails,statistics,status'
+      part: 'snippet,contentDetails,statistics'
     }, null, function(result) {
 
       for(var i = 0; i < result.items.length; i++) {
@@ -152,7 +152,7 @@ exports.browse = function(endpoint, page, query) {
   if(!query.part)
     query.part = 'snippet';
 
-  query.maxResults = 10;
+  query.maxResults = 30;
 
   function loader() {
 
@@ -183,8 +183,7 @@ exports.search = function(page, query) {
   if(!query.part)
     query.part = 'snippet';
 
-  query.maxResults = 10;
-
+  query.maxResults = 30;
 
   function loader() {
     require('./api').call('search', query, page, function(result) {
