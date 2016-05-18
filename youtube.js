@@ -127,9 +127,10 @@ new page.Route(PREFIX + ":categories", function(page) {
 });
 
 new page.Route(PREFIX + ":my:subscriptions", function(page) {
-  page.metadata.title = "My subscriptions";
-  require('./browse').browse('subscriptions', page, {
-    mine: true
+  page.metadata.title = "Recent activity";
+  require('./browse').browse('activities', page, {
+    home: true,
+    part: 'snippet,contentDetails',
   });
 });
 
@@ -167,10 +168,6 @@ new page.Route(PREFIX + ":my:channel", function(page) {
     page.metadata.title = item.snippet.title;
     if(item.snippet.thumbnails)
       page.metadata.icon = 'imageset:' + JSON.stringify(item.snippet.thumbnails);
-
-    page.appendItem(PREFIX + ":my:subscriptions", 'directory', {
-      title: "My subscriptions",
-    }).root.subtype = 'subscriptions';
 
     page.appendItem(PREFIX + ":my:playlists", 'playlist', {
       title: "My playlists",
@@ -221,6 +218,11 @@ new page.Route(PREFIX + ":start", function(page) {
   page.appendItem(null, 'separator', {
     title: 'My Youtube'
   });
+
+  page.appendItem(PREFIX + ":my:subscriptions", 'directory', {
+    title: "My subscriptions",
+  }).root.subtype = 'subscriptions';
+
 
   page.appendItem(PREFIX + ":my:channel", 'directory', {
     title: 'My Channel'

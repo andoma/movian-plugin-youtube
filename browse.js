@@ -14,6 +14,58 @@ function trimlf(s) {
   return s.replace(/(\r\n|\n|\r)/gm,"");
 }
 
+var channelImageSetSizes = {
+  'default': {
+    width: 88,
+    height: 88
+  },
+  'medium': {
+    width: 240,
+    height: 240
+  },
+  'high': {
+    width: 800,
+    height: 800
+  }
+}
+
+var videoImageSetSizes = {
+  'default': {
+    width: 120,
+    height: 90
+  },
+  'medium': {
+    width: 320,
+    height: 180
+  },
+  'high': {
+    width: 480,
+    height: 360
+  }
+}
+
+
+function makeImageSet(thumbnails, sizemap) {
+  var images = [];
+  for(var k in thumbnails) {
+    var v = thumbnails[k];
+    if(!v.width && !v.height) {
+      images.push({
+        url: v.url,
+        width: sizemap[k].width,
+        height: sizemap[k].height,
+      });
+    } else {
+      images.push({
+        url: v.url,
+        width: v.width,
+        height: v.height,
+      });
+    }
+  }
+  return 'imageset:' + JSON.stringify(images);
+}
+
 
 function populatePageFromResults(page, result) {
   var items = {};
@@ -31,7 +83,7 @@ function populatePageFromResults(page, result) {
       allvideos.push(vid);
       items[vid] = page.appendItem(URI, 'video', {
         title: item.snippet.title,
-        icon: 'imageset:' + JSON.stringify(item.snippet.thumbnails),
+        icon: makeImageSet(item.snippet.thumbnails, videoImageSetSizes),
         description: trimlf(item.snippet.description)
       });
       break;
@@ -51,7 +103,7 @@ function populatePageFromResults(page, result) {
         allvideos.push(item.id.videoId);
         items[item.id.videoId] = page.appendItem(URI, 'video', {
           title: item.snippet.title,
-          icon: 'imageset:' + JSON.stringify(item.snippet.thumbnails),
+          icon: makeImageSet(item.snippet.thumbnails, videoImageSetSizes),
           description: trimlf(item.snippet.description)
         });
         break;
@@ -59,7 +111,7 @@ function populatePageFromResults(page, result) {
       case 'youtube#channel':
         page.appendItem(PREFIX + ":channel:" + item.id.channelId, 'directory', {
           title: item.snippet.title,
-          icon: 'imageset:' + JSON.stringify(item.snippet.thumbnails)
+          icon: makeImageSet(item.snippet.thumbnails, channelImageSetSizes),
         });
         break;
 
@@ -105,7 +157,22 @@ function populatePageFromResults(page, result) {
     case 'youtube#channel':
       page.appendItem(PREFIX + ":channel:" + item.id, 'directory', {
         title: item.snippet.title,
-        icon: 'imageset:' + JSON.stringify(item.snippet.thumbnails)
+        icon: makeImageSet(item.snippet.thumbnails, channelImageSetSizes),
+      });
+      break;
+
+    case 'youtube#activity':
+      if(item.snippet.type == 'recommendation') {
+        var vid = item.contentDetails.recommendation.resourceId.videoId;
+      } else {
+        var vid = item.contentDetails.upload.videoId;
+      }
+
+      URI = PREFIX + ":video:" + vid;
+      allvideos.push(vid);
+      items[vid] = page.appendItem(PREFIX + ":video:" + vid, 'video', {
+        title: item.snippet.title,
+        icon: makeImageSet(item.snippet.thumbnails, videoImageSetSizes),
       });
       break;
 
