@@ -3,6 +3,7 @@ var http = require('showtime/http');
 var credentials = require('showtime/store').create('credentials');
 var io = require('native/io'); // XXX: Bad to require('native/')
 
+var KEY = 'AIzaSyDAzVSvPLhABsnUFHjWSm-gtE6xahrIGzo';
 var CLIENT_ID = '1014238784586-9ruvt1i4kq5j6h7i2954juse5k7vgbcc.apps.googleusercontent.com'
 
 //-----------------------------------------------------------------------
@@ -165,7 +166,6 @@ io.httpInspectorCreate('https://www.googleapis.com/youtube/v3/.*', function(ctrl
 //-----------------------------------------------------------------------
 exports.call = function(endpoint, params, page, cb) {
   var URL = 'https://www.googleapis.com/youtube/v3/' + endpoint;
-  var KEY = 'AIzaSyDAzVSvPLhABsnUFHjWSm-gtE6xahrIGzo';
 
   var opts = {
     args: [{key: KEY}, params || {}],
@@ -200,3 +200,25 @@ exports.call = function(endpoint, params, page, cb) {
   });
 }
 
+exports.rate = function(video, rating, cb) {
+  var URL = 'https://www.googleapis.com/youtube/v3/videos/rate';
+
+  var opts = {
+    args: {
+      key: KEY,
+      id: video,
+      rating: rating
+    },
+    postdata: "",
+    noFail: true,       // Don't throw on HTTP errors (400- status code)
+    debug: true
+  };
+
+  http.request(URL, opts, function(err, result) {
+    if(err) {
+      cb(false);
+    } else {
+      cb(result.statuscode == 204);
+    }
+  });
+}

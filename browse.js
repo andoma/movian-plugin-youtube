@@ -1,3 +1,6 @@
+var api = require('./api');
+var popup = require('showtime/popup');
+
 var iso8601DurationRegex = /(-)?P(?:([\.,\d]+)Y)?(?:([\.,\d]+)M)?(?:([\.,\d]+)W)?(?:([\.,\d]+)D)?T(?:([\.,\d]+)H)?(?:([\.,\d]+)M)?(?:([\.,\d]+)S)?/;
 
 function parseISO8601Duration(s) {
@@ -184,6 +187,40 @@ function populatePageFromResults(page, result) {
   }
 
   if(allvideos.length > 0) {
+
+    // Add Like & Dislike buttons to all video items
+
+    for(var i in allvideos) {
+      var vid = allvideos[i];
+      var item = items[vid];
+
+      var aux = {
+        vid: vid,
+        item: item,
+      };
+
+      aux.like = item.addOptAction('Like', function() {
+        api.rate(this.vid, 'like', function(ok) {
+          if(ok) {
+            item.destroyOption(this.like);
+            item.destroyOption(this.dislike);
+          } else {
+            popup.notify('Request to like video failed', 5);
+          }
+        }.bind(this));
+      }.bind(aux), 'thumb_up');
+
+      aux.dislike = item.addOptAction('Dislike', function() {
+        api.rate(this.vid, 'dislike', function(ok) {
+          if(ok) {
+            item.destroyOption(this.like);
+            item.destroyOption(this.dislike);
+          } else {
+            popup.notify('Request to dislike video failed', 5);
+          }
+        }.bind(this));
+      }.bind(aux), 'thumb_down');
+    }
 
     require('./api').call('videos', {
       id: allvideos.join(),
