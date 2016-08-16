@@ -172,6 +172,7 @@ exports.call = function(endpoint, params, page, cb) {
     noFail: true,       // Don't throw on HTTP errors (400- status code)
     compression: true,  // Will send 'Accept-Encoding: gzip' in request
     caching: true,      // Enables Movian's built-in HTTP cache
+    verifySSL: true,    // Verify that remote SSL cert is valid
   };
 
   http.request(URL, opts, function(err, result) {
@@ -211,7 +212,7 @@ exports.rate = function(video, rating, cb) {
     },
     postdata: "",
     noFail: true,       // Don't throw on HTTP errors (400- status code)
-    debug: true
+    verifySSL: true,    // Verify that remote SSL cert is valid
   };
 
   http.request(URL, opts, function(err, result) {
