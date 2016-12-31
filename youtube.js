@@ -268,7 +268,7 @@ function videoPage(page, id) {
       canonicalUrl: PREFIX + ':video:' + info.video_id,
       sources: [{
         url: info.formats[0].url,
-        mimetype: info.formats[0].type.split(';')[0],
+        mimetype: (info.formats[0].type || '').split(';')[0],
       }],
       no_subtitle_scan: true,
       subtitles: []
