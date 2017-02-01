@@ -27,10 +27,14 @@
  */
 var modsearch = Duktape.modSearch;
 Duktape.modSearch = function(a, b, c, d) {
-  if(a === 'html-entities' || a === 'path') {
+  switch(a) {
+   case 'html-entities':
+   case 'path':
+   case 'sax':
     return modsearch('./support/' + a, b, c, d);
+  default:
+    return modsearch(a,b,c,d);
   }
-  return modsearch(a,b,c,d);
 }
 
 

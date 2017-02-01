@@ -55,19 +55,22 @@ function downloadFromInfoCallback(stream, info, options) {
     url += '&range=' + options.range;
   }
 
-  doDownload(stream, url, 3);
+  doDownload(stream, url, options, 3);
 }
 
 
+var redirectCodes = new Set([301, 302, 303, 307]);
+
 /**
- * Tries to download the video. Youtube might respond with a 302 redirect
+ * Tries to download the video. Youtube might respond with a redirect
  * status code. In which case, this function will call itself again.
  *
  * @param {stream.Readable} stream
  * @param {String} url
+ * @param {Object} options
  * @param {Number} tryCount Prevent infinite redirects.
  */
-function doDownload(stream, url, tryCount) {
+function doDownload(stream, url, options, tryCount) {
   if (stream._isDestroyed) { return; }
   if (tryCount === 0) {
     stream.emit('error', new Error('Too many redirects'));
@@ -75,11 +78,16 @@ function doDownload(stream, url, tryCount) {
   }
 
   // Start downloading the video.
-  var req = request(url);
+  var myrequest = options.request || request;
+  var req = myrequest(url, options.requestOptions);
   var myres;
   stream.destroy = function() {
     req.abort();
     stream.emit('abort');
+    if (myres) {
+      myres.destroy();
+      myres.unpipe();
+    }
   };
 
   req.on('error', function(err) {
@@ -89,14 +97,15 @@ function doDownload(stream, url, tryCount) {
   req.on('response', function(res) {
     myres = res;
     if (stream._isDestroyed) { return; }
-    if (res.statusCode !== 200) {
-      if (res.statusCode === 302) {
+    // Support for Streaming 206 status videos
+    if (res.statusCode !== 200 && res.statusCode !== 206) {
+      if (redirectCodes.has(res.statusCode)) {
         // Redirection header.
-        doDownload(stream, res.headers.location, tryCount - 1);
+        doDownload(stream, res.headers.location, options, tryCount - 1);
         return;
       }
       stream.emit('response', res);
-      stream.emit('error', new Error('status code ' + res.statusCode));
+      stream.emit('error', new Error('Status code ' + res.statusCode));
       return;
     }
 

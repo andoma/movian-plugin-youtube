@@ -1,9 +1,10 @@
 var format      = require('url').format;
 var querystring = require('querystring');
+var sax         = require('sax');
 var request     = require('./request');
 var util        = require('./util');
 var sig         = require('./sig');
-var FORMATS  = require('./formats');
+var FORMATS     = require('./formats');
 
 
 var VIDEO_URL = 'https://www.youtube.com/watch?v=';
@@ -23,194 +24,186 @@ var KEYS_TO_SPLIT = [
  * Gets info from a video.
  *
  * @param {String} link
- * @param {Object} opts
+ * @param {Object} options
  * @param {Function(Error, Object)} callback
  */
-module.exports = function getInfo(link, opts, callback) {
-  if (typeof opts === 'function') {
-    callback = opts;
-    opts = {};
-  } else if (!opts) {
-    opts = {};
+module.exports = function getInfo(link, options, callback) {
+  if (typeof options === 'function') {
+    callback = options;
+    options = {};
+  } else if (!options) {
+    options = {};
   }
 
+  var myrequest = options.request || request;
   var id = util.getVideoID(link);
-  util.parallel([
-    function(callback) {
-      // Try getting config from the video page first.
-      var url = VIDEO_URL + id;
-      request(url, function(err, body) {
-        if (err) return callback(err);
 
-        // Get description from #eow-description
-        var description = util.getVideoDescription(body);
-
-        var jsonStr = util.between(body, 'ytplayer.config = ', '</script>');
-        if (jsonStr) {
-          var config = parseJSON(jsonStr);
-          if (!config) {
-            return callback(new Error('could not parse video page config'));
-          }
-          callback(null, [description, config, false]);
-
-        } else {
-          // If the video page doesn't work, maybe because it has mature content
-          // and requires an account logged into view, try the embed page.
-          url = EMBED_URL + id;
-          request(url, function(err, body) {
-            if (err) return callback(err);
-
-            jsonStr = util.between(body,
-              'yt.setConfig(\'PLAYER_CONFIG\', ', '</script>');
-            if (!jsonStr) {
-              return callback(new Error('could not find `player config`'));
-            }
-
-            var config = parseJSON(jsonStr);
-            if (!config) {
-              return callback(new Error('could not parse embed page config'));
-            }
-            callback(null, [description, config, true]);
-          });
-        }
-      });
-    },
-    function(callback) {
-      var url = format({
-        protocol: 'https',
-        host: INFO_HOST,
-        pathname: INFO_PATH,
-        query: {
-          video_id: id,
-          eurl: VIDEO_EURL + id,
-          ps: 'default',
-          gl: 'US',
-          hl: 'en',
-        },
-      });
-      request(url, function(err, body) {
-        if (err) return callback(err);
-        callback(null, querystring.parse(body));
-      });
-    }
-  ], function(err, results) {
+  // Try getting config from the video page first.
+  var url = VIDEO_URL + id;
+  myrequest(url, options.requestOptions, function(err, body) {
     if (err) return callback(err);
 
-    var description = results[0][0];
-    var config = results[0][1];
-    var dashmpd2;
-    if (results[0][2]) {
-      config.args = results[1];
-    } else {
-      dashmpd2 = results[1].dashmpd;
+    // Check if this video exists.
+    var unavailableMsg = util.between(body, '<h1 id="unavailable-message" class="message">', '</h1>');
+    if (unavailableMsg) {
+      if (unavailableMsg.trim() == 'This video does not exist.') {
+        return callback(new Error('Video not found'));
+      }
     }
-    gotConfig(opts, description, config, dashmpd2, callback);
+
+    // Get description from #eow-description.
+    var description = util.getVideoDescription(body);
+
+    var jsonStr = util.between(body, 'ytplayer.config = ', '</script>');
+    if (jsonStr) {
+      jsonStr = jsonStr.slice(0, jsonStr.lastIndexOf(';ytplayer.load'));
+      var config;
+      try {
+        config = JSON.parse(jsonStr);
+      } catch (err) {
+        return callback(new Error('Error parsing config: ' + err.message));
+      }
+      if (!config) {
+        return callback(new Error('Could not parse video page config'));
+      }
+      gotConfig(id, options, description, config, callback);
+
+    } else {
+      // If the video page doesn't work, maybe because it has mature content
+      // and requires an account logged into view, try the embed page.
+      url = EMBED_URL + id;
+      myrequest(url, options.requestOptions, function(err, body) {
+        if (err) return callback(err);
+
+        config = util.between(body, 't.setConfig({\'PLAYER_CONFIG\': ', '},\'');
+        if (!config) {
+          return callback(new Error('Could not find `player config`'));
+        }
+        try {
+          config = JSON.parse(config + '}');
+        } catch (err) {
+          return callback(new Error('Error parsing config: ' + err.message));
+        }
+        gotConfig(id, options, description, config, callback);
+      });
+    }
   });
 };
 
 
 /**
- * JStream is used because we know when the JSON string begins,
- * but not when it ends. So a string that contains it, and that may
- * contain a bunch of other things, is read until the first object
- * is completely parsed.
- *
- * @param {String} body
- * @return {Object}
- */
-function parseJSON(body) {
-  var x = body.indexOf(';ytplayer.load');
-  if(x != -1)
-    body = body.substring(0, x);
-  return JSON.parse(body);
-}
-
-
-/**
- * @param {Object} opts
+ * @param {Object} id
+ * @param {Object} options
  * @param {String} description
  * @param {Object} config
- * @param {String} dashmpd2
  * @param {Function(Error, Object)} callback
  */
-function gotConfig(opts, description, config, dashmpd2, callback) {
-  var info = config.args;
-  if (info.status === 'fail') {
-    var msg = info.errorcode && info.reason ?
-      'Code ' + info.errorcode + ': ' + info.reason : 'Video not found';
-    callback(new Error(msg));
-    return;
+function gotConfig(id, options, description, config, callback) {
+  if (config.status === 'fail') {
+    return new Error(config.errorcode && config.reason ?
+      'Code ' + config.errorcode + ': ' + config.reason : 'Video not found');
   }
-
-  // Split some keys by commas.
-  KEYS_TO_SPLIT.forEach(function(key) {
-    if (!info[key]) return;
-    info[key] = info[key]
-    .split(',')
-    .filter(function(v) { return v !== ''; });
+  var url = format({
+    protocol: 'https',
+    host: INFO_HOST,
+    pathname: INFO_PATH,
+    query: {
+      video_id: id,
+      eurl: VIDEO_EURL + id,
+      ps: 'default',
+      gl: 'US',
+      hl: 'en',
+      sts: config.sts,
+    },
   });
-
-  info.fmt_list = info.fmt_list ?
-    info.fmt_list.map(function(format) {
-      return format.split('/');
-    }) : [];
-
-  if (info.video_verticals) {
-    info.video_verticals = info.video_verticals
-    .slice(1, -1)
-    .split(', ')
-    .filter(function(val) { return val !== ''; })
-    .map(function(val) { return parseInt(val, 10); })
-    ;
-  }
-
-  info.formats = util.parseFormats(info);
-  info.description = description;
-
-  if (info.formats.some(function(f) { return !!f.s; }) ||
-      info.dashmpd || (dashmpd2 && dashmpd2 !== info.dashmpd) || info.hlsvp) {
-    sig.getTokens(config.assets.js, opts.debug, function(err, tokens) {
-      if (err) return callback(err);
-
-      sig.decipherFormats(info.formats, tokens, opts.debug);
-
-      var funcs = [];
-
-      if (info.hlsvp) {
-        info.hlsvp = decipherURL(info.hlsvp, tokens);
-        funcs.push(getM3U8.bind(null, info.hlsvp, opts.debug));
-      }
-
-      util.parallel(funcs, function(err, results) {
-        if (err) return callback(err);
-        if (results[0]) { mergeFormats(info, results[0]); }
-        if (results[1]) { mergeFormats(info, results[1]); }
-        if (results[2]) { mergeFormats(info, results[2]); }
-        if (!info.formats.length) {
-          callback(new Error('No formats found'));
-          return;
-        }
-        if (opts.debug) {
-          info.formats.forEach(function(format) {
-            var itag = format.itag;
-            if (!FORMATS[itag]) {
-              console.warn('No format metadata for itag ' + itag + ' found');
-            }
-          });
-        }
-        info.formats.sort(util.sortFormats);
-        callback(null, info);
-      });
-    });
-  } else {
-    if (!info.formats.length) {
-      callback(new Error('Video not found'));
-      return;
+  var myrequest = options.request || request;
+  myrequest(url, options.requestOptions, function(err, body) {
+    if (err) return callback(err);
+    var info = querystring.parse(body);
+    if (info.status === 'fail') {
+      info = config.args;
     }
-    sig.decipherFormats(info.formats, null, opts.debug);
-    info.formats.sort(util.sortFormats);
-    callback(null, info);
-  }
+
+    // Split some keys by commas.
+    KEYS_TO_SPLIT.forEach(function(key) {
+      if (!info[key]) return;
+      info[key] = info[key]
+      .split(',')
+      .filter(function(v) { return v !== ''; });
+    });
+
+    info.fmt_list = info.fmt_list ?
+      info.fmt_list.map(function(format) {
+        return format.split('/');
+      }) : [];
+
+    if (info.video_verticals) {
+      info.video_verticals = info.video_verticals
+      .slice(1, -1)
+      .split(', ')
+      .filter(function(val) { return val !== ''; })
+      .map(function(val) { return parseInt(val, 10); })
+      ;
+    }
+
+    info.formats = util.parseFormats(info);
+    info.description = description;
+
+    if (info.formats.some(function(f) { return !!f.s; }) ||
+        config.args.dashmpd || info.dashmpd || info.hlsvp) {
+      sig.getTokens(config.assets.js, options, function(err, tokens) {
+        if (err) return callback(err);
+
+        sig.decipherFormats(info.formats, tokens, options.debug);
+
+        var funcs = [];
+        var dashmpd;
+        if (config.args.dashmpd) {
+          dashmpd = decipherURL(config.args.dashmpd, tokens);
+          funcs.push(getDashManifest.bind(null, dashmpd, options));
+        }
+
+        if (info.dashmpd && info.dashmpd !== config.args.dashmpd) {
+          dashmpd = decipherURL(info.dashmpd, tokens);
+          funcs.push(getDashManifest.bind(null, dashmpd, options));
+        }
+
+        if (info.hlsvp) {
+          info.hlsvp = decipherURL(info.hlsvp, tokens);
+          funcs.push(getM3U8.bind(null, info.hlsvp, options));
+        }
+
+        util.parallel(funcs, function(err, results) {
+          if (err) return callback(err);
+          if (results[0]) { mergeFormats(info, results[0]); }
+          if (results[1]) { mergeFormats(info, results[1]); }
+          if (results[2]) { mergeFormats(info, results[2]); }
+          if (!info.formats.length) {
+            callback(new Error('No formats found'));
+            return;
+          }
+          if (options.debug) {
+            info.formats.forEach(function(format) {
+              var itag = format.itag;
+              if (!FORMATS[itag]) {
+                console.warn('No format metadata for itag ' + itag + ' found');
+              }
+            });
+          }
+          info.formats.sort(util.sortFormats);
+          callback(null, info);
+        });
+      });
+    } else {
+      if (!info.formats.length) {
+        callback(new Error('Video does not contain any available formats'));
+        return;
+      }
+      sig.decipherFormats(info.formats, null, options.debug);
+      info.formats.sort(util.sortFormats);
+      callback(null, info);
+    }
+  });
 }
 
 
@@ -245,17 +238,68 @@ function mergeFormats(info, formatsMap) {
 }
 
 
+/**
+ * Gets additional DASH formats.
+ *
+ * @param {String} url
+ * @param {Object} options
+ * @param {Function(!Error, Array.<Object>)} callback
+ */
+function getDashManifest(url, options, callback) {
+  var myrequest = options.request || request;
+  var formats = {};
+  var currentFormat = null;
+  var expectUrl = false;
+
+  var parser = sax.parser(false);
+  parser.onerror = callback;
+  parser.onopentag = function(node) {
+    if (node.name === 'REPRESENTATION') {
+      var itag = node.attributes.ID;
+      var meta = FORMATS[itag];
+      currentFormat = { itag: itag };
+      for (var key in meta) {
+        currentFormat[key] = meta[key];
+      }
+      formats[itag] = currentFormat;
+    }
+    expectUrl = node.name === 'BASEURL';
+  };
+  parser.ontext = function(text) {
+    if (expectUrl) {
+      currentFormat.url = text;
+    }
+  };
+  parser.onend = function() { callback(null, formats); };
+
+  var req = myrequest(url, options.requestOptions);
+  req.on('error', callback);
+  req.on('response', function(res) {
+    // Support for Streaming 206 status videos
+    if (res.statusCode !== 200 && res.statusCode !== 206) {
+      // Ignore errors on manifest.
+      return parser.close();
+    }
+    res.setEncoding('utf8');
+    res.on('error', callback);
+    res.on('data', function(chunk) { parser.write(chunk); });
+    res.on('end', parser.close.bind(parser));
+  });
+}
+
 
 /**
  * Gets additional formats.
  *
  * @param {String} url
- * @param {Boolean} debug
+ * @param {Object} options
  * @param {Function(!Error, Array.<Object>)} callback
  */
-function getM3U8(url, debug, callback) {
-  request(url, function(err, body) {
+function getM3U8(url, options, callback) {
+  var myrequest = options.request || request;
+  myrequest(url, options.requestOptions, function(err, body) {
     if (err) return callback(err);
+
     var formats = {};
     body
       .split('\n')
@@ -265,7 +309,7 @@ function getM3U8(url, debug, callback) {
       .forEach(function(line) {
         var itag = line.match(/\/itag\/(\d+)\//)[1];
         if (!itag) {
-          if (debug) {
+          if (options.debug) {
             console.warn('No itag found in url ' + line);
           }
           return;

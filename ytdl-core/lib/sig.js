@@ -5,14 +5,17 @@ var request = require('./request');
 var cache   = require('./cache');
 
 
+var VIDEO_URL = 'https://www.youtube.com/watch?v=';
+
+
 /**
  * Extract signature deciphering tokens from html5player file.
  *
  * @param {String} html5playerfile
- * @param {Boolean} debug
+ * @param {Object} options
  * @param {Function(!Error, Array.<String>)}
  */
-exports.getTokens = function(html5playerfile, debug, callback) {
+exports.getTokens = function(html5playerfile, options, callback) {
   var key, cachedTokens;
   var rs = /(?:html5)?player-([a-zA-Z0-9\-_]+)(?:\.js|\/)/
     .exec(html5playerfile);
@@ -25,13 +28,14 @@ exports.getTokens = function(html5playerfile, debug, callback) {
   if (cachedTokens) {
     callback(null, cachedTokens);
   } else {
-    html5playerfile = 'http:' + html5playerfile;
-    request(html5playerfile, function(err, body) {
+    html5playerfile = url.resolve(VIDEO_URL, html5playerfile);
+    var myrequest = options.request || request;
+    myrequest(html5playerfile, options.requestOptions, function(err, body) {
       if (err) return callback(err);
 
       var tokens = exports.extractActions(body);
       if (!tokens || !tokens.length) {
-        if (debug) {
+        if (options.debug) {
           var filename = key + '.js';
           var filepath = path.resolve(
             __dirname, '../test/files/html5player/' + filename);

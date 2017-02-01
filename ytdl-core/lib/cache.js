@@ -3,7 +3,6 @@
 // needs the same one.
 //
 // The cache is very simplistic, shared, and it only needs get and set.
-// No need for fancy stuff like cache.del() or cache.has().
 exports.store = {};
 
 
@@ -22,4 +21,12 @@ exports.set = function(key, value) {
  */
 exports.get = function(key) {
   return exports.store[key];
+};
+
+
+/**
+ * Empties the cache.
+ */
+exports.reset = function() {
+  exports.store = {};
 };

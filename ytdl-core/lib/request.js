@@ -1,10 +1,17 @@
 var http  = require('http');
 var https = require('https');
 var parse = require('url').parse;
+var util  = require('./util');
 
 var httpLibs = { 'http:': http, 'https:': https };
 
-module.exports = function(url, callback) {
+/**
+ * @param {String} url
+ * @param {Object} options
+ * @param {Function(Error, String)} callback
+ * @return http.ClientRequest
+ */
+module.exports = function(url, options, callback) {
   var parsed = parse(url);
   var httpLib = httpLibs[parsed.protocol];
   if (!httpLib) {
@@ -17,11 +24,13 @@ module.exports = function(url, callback) {
     return;
   }
 
+  if (options) { util.assignDeep(parsed, options); }
   var req = httpLib.get(parsed);
   if (callback) {
     req.on('response', function(res) {
-      if (res.statusCode !== 200) {
-        callback(new Error('status code ' + res.statusCode));
+      // Support for Streaming 206 status videos
+      if (res.statusCode !== 200 && res.statusCode !== 206) {
+        callback(new Error('Status code ' + res.statusCode));
         return;
       }
 

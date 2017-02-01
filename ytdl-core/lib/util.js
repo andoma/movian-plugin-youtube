@@ -32,8 +32,8 @@ var audioEncodingRanks = {
 };
 var videoEncodingRanks = {
   'Sorenson H.283': 1,
-  'VP8': 3,
   'MPEG-4 Visual': 2,
+  'VP8': 3,
   'VP9': 4,
   'H.264': 5,
 };
@@ -109,7 +109,7 @@ exports.chooseFormat = function(formats, options) {
   if (options.filter) {
     formats = exports.filterFormats(formats, options.filter);
     if (formats.length === 0) {
-      return new Error('no formats found with custom filter');
+      return new Error('No formats found with custom filter');
     }
   }
 
@@ -209,15 +209,27 @@ exports.between = function(haystack, left, right) {
  *
  * There are a few type of video URL formats.
  *  - http://www.youtube.com/watch?v=VIDEO_ID
+ *  - http://m.youtube.com/watch?v=VIDEO_ID
  *  - http://youtu.be/VIDEO_ID
+ *  - http://www.youtube.com/v/VIDEO_ID
+ *  - http://www.youtube.com/embed/VIDEO_ID
  *
  * @param {String} link
  * @return {String}
  */
+var idRegex = /^[a-zA-Z0-9-_]{11}$/;
 exports.getVideoID = function(link) {
-  var linkParsed = url.parse(link, true);
-  var id = linkParsed.hostname === 'youtu.be' ?
-    linkParsed.pathname.slice(1) : linkParsed.query.v;
+  if (idRegex.test(link)) {
+    return link;
+  }
+  var parsed = url.parse(link, true);
+  var id = parsed.query.v;
+  if (parsed.hostname === 'youtu.be' ||
+      (parsed.hostname === 'youtube.com' ||
+       parsed.hostname === 'www.youtube.com') && !id) {
+    var s = parsed.pathname.split('/');
+    id = s[s.length - 1];
+  }
   if (!id) {
     throw new Error('No video id found: ' + link);
   }
@@ -308,4 +320,23 @@ exports.parallel = function(funcs, callback) {
   } else {
     callback(null, results);
   }
+};
+
+
+/**
+ * Deep assign object to another.
+ *
+ * @param {Object} target
+ * @param {Object} source
+ */
+exports.assignDeep = function(target, source) {
+  for (var key in source) {
+    if (typeof source[key] === 'object' && source[key] != null &&
+        target[key]) {
+      exports.assignDeep(target[key], source[key]);
+    } else {
+      target[key] = source[key];
+    }
+  }
+  return target;
 };
