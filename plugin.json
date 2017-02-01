@@ -3,7 +3,7 @@
   "author": "Andreas Smas",
   "title": "Youtube",
   "synopsis": "Youtube: Broadcast Yourself",
-  "version": "5.0.7",
+  "version": "5.0.8",
   "file": "youtube.js",
   "showtimeVersion": "5.0.462",
   "type": "ecmascript",
@@ -14,6 +14,11 @@
   "control": {
     "uriprefixes": ["youtube:",
                     "http://www.youtube.com/",
-                    "https://www.youtube.com/"]
+                    "https://www.youtube.com/",
+                    "http://youtube.com/",
+                    "https://youtube.com/",
+                    "http://youtu.be/",
+                    "https://youtu.be/",
+                   ]
   }
 }

@@ -290,3 +290,7 @@ new page.Route(PREFIX + ":video:(.*)", videoPage);
 // More could be added here for sure (youtu.be/, etc)
 new page.Route("http://www.youtube.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
 new page.Route("https://www.youtube.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
+new page.Route("http://youtube.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
+new page.Route("https://youtube.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
+new page.Route("http://youtu.be/([A-Za-z0-9_\\-]*)", videoPage);
+new page.Route("https://youtu.be/([A-Za-z0-9_\\-]*)", videoPage);
