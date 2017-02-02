@@ -287,7 +287,6 @@ function videoPage(page, id) {
 new page.Route(PREFIX + ":video:(.*)", videoPage);
 
 // These allows us to play standard youtube links
-// More could be added here for sure (youtu.be/, etc)
 new page.Route("http://www.youtube.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
 new page.Route("https://www.youtube.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
 new page.Route("http://youtube.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
