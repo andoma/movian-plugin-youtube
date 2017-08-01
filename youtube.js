@@ -145,12 +145,18 @@ new page.Route(PREFIX + ":my:playlists", function(page) {
   });
 });
 
-new page.Route(PREFIX + ":playlist:(.*)", function(page, playlistid) {
+function playlistPage(page, playlistid) {
   pagemeta(page, 'playlists', {id: playlistid});
   require('./browse').browse('playlistItems', page, {
     playlistId: playlistid
   });
-});
+}
+
+new page.Route(PREFIX + ":playlist:(.*)", playlistPage);
+new page.Route("https://www.youtube.com/playlist\\?list=([A-Za-z0-9_\\-]*)", playlistPage); 
+new page.Route("https://youtube.com/playlist\\?list=([A-Za-z0-9_\\-]*)", playlistPage); 
+new page.Route("http://www.youtube.com/playlist\\?list=([A-Za-z0-9_\\-]*)", playlistPage); 
+new page.Route("http://youtube.com/playlist\\?list=([A-Za-z0-9_\\-]*)", playlistPage); 
 
 new page.Route(PREFIX + ":guidecategory:(.*)", function(page, catid) {
   pagemeta(page, 'guideCategories', {id: catid});
