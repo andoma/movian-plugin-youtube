@@ -266,13 +266,18 @@ function videoPage(page, id) {
       return;
     }
 
+    var url = info.formats[0].url;
+    var mimetype = (info.formats[0].type ? info.formats[0].type.split(';')[0] : '');  
+    if (!mimetype)
+        url = 'hls:' + url;
+    
     var videoParams = {
       title: unescape(info.title),
       icon: info.iurlmaxres,
       canonicalUrl: PREFIX + ':video:' + info.video_id,
       sources: [{
-        url: info.formats[0].url,
-        mimetype: info.formats[0].type.split(';')[0],
+        url: url,
+        mimetype: mimetype,
       }],
       no_subtitle_scan: true,
       subtitles: []
