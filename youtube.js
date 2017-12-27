@@ -97,30 +97,59 @@ require('showtime/service').create("Youtube", PREFIX + ":start", "video", true,
 
 // Setup all the routes we need
 // Most of these just maps this to a browse query
-new page.Route(PREFIX + ":channel:(.*)", function(page, channelid) {
+
+function browseChannel(page, channelid) {
   pagemeta(page, 'channels', {id: channelid});
   require('./browse').search(page, {
     channelId: channelid
   });
-});
+}
+
+new page.Route(PREFIX + ":channel:(.*)", browseChannel);
 
 
-new page.Route(PREFIX + ":category:(.*)", function(page, category) {
+function browseCategory(page, category) {
   page.metadata.icon = Plugin.path + 'youtube.svg';
   pagemeta(page, 'videoCategories', {id: category});
   require('./browse').search(page, {
     videoCategoryId: category,
     type: 'video',
   });
-});
+}
 
-new page.Route(PREFIX + ":search:(.*)", function(page, query) {
+new page.Route(PREFIX + ":category:(.*)", browseCategory);
+
+function browseSearchResults(page, query) {
   page.metadata.icon = Plugin.path + 'youtube.svg';
   page.metadata.title = 'Search results for: ' + query;
   require('./browse').search(page, {
     q: query
   });
-});
+}
+
+new page.Route(PREFIX + ":search:(.*)", browseSearchResults);
+
+function browsePlaylist(page, playlistid) {
+  pagemeta(page, 'playlists', {id: playlistid});
+  require('./browse').browse('playlistItems', page, {
+    playlistId: playlistid
+  });
+}
+
+new page.Route(PREFIX + ":playlist:(.*)", browsePlaylist);
+
+function browseCategoryId(page, catid) {
+  pagemeta(page, 'guideCategories', {id: catid});
+  page.model.contents = 'grid';
+  require('./browse').browse('channels', page, {
+    categoryId: catid
+  });
+}
+
+new page.Route(PREFIX + ":guidecategory:(.*)", browseCategoryId);
+
+
+
 
 new page.Route(PREFIX + ":categories", function(page) {
   page.metadata.title = 'Categories';
@@ -142,21 +171,6 @@ new page.Route(PREFIX + ":my:playlists", function(page) {
   page.metadata.title = "My playlists";
   require('./browse').browse('playlists', page, {
     mine: true
-  });
-});
-
-new page.Route(PREFIX + ":playlist:(.*)", function(page, playlistid) {
-  pagemeta(page, 'playlists', {id: playlistid});
-  require('./browse').browse('playlistItems', page, {
-    playlistId: playlistid
-  });
-});
-
-new page.Route(PREFIX + ":guidecategory:(.*)", function(page, catid) {
-  pagemeta(page, 'guideCategories', {id: catid});
-  page.model.contents = 'grid';
-  require('./browse').browse('channels', page, {
-    categoryId: catid
   });
 });
 
@@ -298,3 +312,11 @@ new page.Route("http://youtube.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
 new page.Route("https://youtube.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
 new page.Route("http://youtu.be/([A-Za-z0-9_\\-]*)", videoPage);
 new page.Route("https://youtu.be/([A-Za-z0-9_\\-]*)", videoPage);
+
+// playlists
+new page.Route("https://www.youtube.com/playlist\\?list=([A-Za-z0-9_\\-]*)", browsePlaylist);
+// searches
+new page.Route("https://www.youtube.com/results\\?search_query=(.*)", browseSearchResults);
+// channels
+new page.Route("https://www.youtube.com/channel/(.*)", browseChannel);
+new page.Route("https://www.youtube.com/channel/(.*)/.*", browseChannel);
