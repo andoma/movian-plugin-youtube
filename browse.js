@@ -262,7 +262,7 @@ exports.browse = function(endpoint, page, query) {
 
     require('./api').call(endpoint, query, page, function(result) {
       if(result.pageInfo && result.pageInfo.totalResults === 0) {
-        page.type = 'empty';
+        showNoContent(page);
         return;
       }
       populatePageFromResults(page, result);
@@ -276,6 +276,13 @@ exports.browse = function(endpoint, page, query) {
 }
 
 
+function showNoContent(page) {
+  page.flush();
+  page.type = 'directory';
+  page.appendPassiveItem('file', '', {
+    title: 'No content'
+  });
+}
 
 
 exports.search = function(page, query) {
@@ -293,7 +300,7 @@ exports.search = function(page, query) {
     require('./api').call('search', query, page, function(result) {
 
       if(result.pageInfo && result.pageInfo.totalResults === 0) {
-        page.type = 'empty';
+        showNoContent(page);
         return;
       }
       populatePageFromResults(page, result);
@@ -328,6 +335,8 @@ exports.search = function(page, query) {
     ['medium',  '4-20 min'],
     ['long',    '>20 min']], function(duration) {
       query.videoDuration = duration;
+      if(duration != 'any') 
+        query.type = 'video'
       if(page.asyncPaginator) {
         reload();
       }

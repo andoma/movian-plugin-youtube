@@ -3,7 +3,7 @@
   "author": "Andreas Smas",
   "title": "Youtube",
   "synopsis": "Youtube: Broadcast Yourself",
-  "version": "5.0.11",
+  "version": "5.0.12",
   "file": "youtube.js",
   "showtimeVersion": "5.0.462",
   "type": "ecmascript",
