@@ -131,9 +131,9 @@ new page.Route(PREFIX + ":categories", function(page) {
 });
 
 new page.Route(PREFIX + ":my:subscriptions", function(page) {
-  page.metadata.title = "Recent subscriptions";
-  require('./browse').browse('subscriptions', page, {
-    mine: true,
+  page.metadata.title = "Recent activity";
+  require('./browse').browse('activities', page, {
+    home: true,
     part: 'snippet,contentDetails',
   });
 });
