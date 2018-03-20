@@ -38,7 +38,7 @@ Duktape.modSearch = function(a, b, c, d) {
 }
 
 
-var REGION = 'us';
+var REGION = 'ru';
 var PREFIX = "youtube";
 var UA = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:15.0) Gecko/20100101 Firefox/15.0.1'
 var page = require('showtime/page');
@@ -131,9 +131,9 @@ new page.Route(PREFIX + ":categories", function(page) {
 });
 
 new page.Route(PREFIX + ":my:subscriptions", function(page) {
-  page.metadata.title = "Recent activity";
-  require('./browse').browse('activities', page, {
-    home: true,
+  page.metadata.title = "Recent subscriptions";
+  require('./browse').browse('subscriptions', page, {
+    mine: true,
     part: 'snippet,contentDetails',
   });
 });
