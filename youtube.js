@@ -38,7 +38,7 @@ Duktape.modSearch = function(a, b, c, d) {
 }
 
 
-var REGION = 'us';
+var REGION = 'ru';
 var PREFIX = "youtube";
 var UA = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:15.0) Gecko/20100101 Firefox/15.0.1'
 var page = require('showtime/page');
