@@ -231,9 +231,12 @@ function populatePageFromResults(page, result) {
         var item = result.items[i];
         var itemid = item.id;
         var metadata = items[itemid].root.metadata;
+        var publishDate = new Date(item.snippet.publishedAt);
 
         metadata.duration     = parseISO8601Duration(item.contentDetails.duration);
-        metadata.description  = trimlf(item.snippet.description);
+        metadata.description  = 'Channel: '  + item.snippet.channelTitle +
+                                '\nPublished at: ' + publishDate.toLocaleString() + '\n\n' +
+                                trimlf(item.snippet.description);
         metadata.viewCount    = parseInt(item.statistics.viewCount);
         metadata.likeCount    = parseInt(item.statistics.likeCount);
         metadata.dislikeCount = parseInt(item.statistics.dislikeCount);
@@ -345,4 +348,3 @@ exports.search = function(page, query) {
   loader();
   page.asyncPaginator = loader;
 }
-
