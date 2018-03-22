@@ -130,10 +130,18 @@ new page.Route(PREFIX + ":categories", function(page) {
   });
 });
 
-new page.Route(PREFIX + ":my:subscriptions", function(page) {
+new page.Route(PREFIX + ":my:activities", function(page) {
   page.metadata.title = "Recent activity";
   require('./browse').browse('activities', page, {
     home: true,
+    part: 'snippet,contentDetails',
+  });
+});
+
+new page.Route(PREFIX + ":my:subscriptions", function(page) {
+  page.metadata.title = "My subscriptions";
+  require('./browse').browse('subscriptions', page, {
+    mine: true,
     part: 'snippet,contentDetails',
   });
 });
@@ -229,9 +237,13 @@ new page.Route(PREFIX + ":start", function(page) {
     title: 'My Youtube'
   });
 
+  page.appendItem(PREFIX + ":my:activities", 'directory', {
+    title: "YouTube home page activities",
+  }).root.subtype = 'subscriptions';
+
   page.appendItem(PREFIX + ":my:subscriptions", 'directory', {
     title: "My subscriptions",
-  }).root.subtype = 'subscriptions';
+  });
 
 
   page.appendItem(PREFIX + ":my:channel", 'directory', {
