@@ -1,6 +1,6 @@
 /*
   Movian Youtube Plugin
-  (c) 2016 Andreas Smas All rights reserved
+  (c) 2016-2018 Andreas Smas All rights reserved
  */
 
 /*
@@ -153,10 +153,10 @@ function playlistPage(page, playlistid) {
 }
 
 new page.Route(PREFIX + ":playlist:(.*)", playlistPage);
-new page.Route("https://www.youtube.com/playlist\\?list=([A-Za-z0-9_\\-]*)", playlistPage); 
-new page.Route("https://youtube.com/playlist\\?list=([A-Za-z0-9_\\-]*)", playlistPage); 
-new page.Route("http://www.youtube.com/playlist\\?list=([A-Za-z0-9_\\-]*)", playlistPage); 
-new page.Route("http://youtube.com/playlist\\?list=([A-Za-z0-9_\\-]*)", playlistPage); 
+new page.Route("https://www\.youtube\.com/playlist\\?list=([A-Za-z0-9_\\-]*)", playlistPage); 
+new page.Route("https://youtube\.com/playlist\\?list=([A-Za-z0-9_\\-]*)", playlistPage); 
+new page.Route("http://www\.youtube\.com/playlist\\?list=([A-Za-z0-9_\\-]*)", playlistPage); 
+new page.Route("http://youtube\.com/playlist\\?list=([A-Za-z0-9_\\-]*)", playlistPage); 
 
 new page.Route(PREFIX + ":guidecategory:(.*)", function(page, catid) {
   pagemeta(page, 'guideCategories', {id: catid});
@@ -298,9 +298,9 @@ function videoPage(page, id) {
 new page.Route(PREFIX + ":video:(.*)", videoPage);
 
 // These allows us to play standard youtube links
-new page.Route("http://www.youtube.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
-new page.Route("https://www.youtube.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
-new page.Route("http://youtube.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
-new page.Route("https://youtube.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
-new page.Route("http://youtu.be/([A-Za-z0-9_\\-]*)", videoPage);
-new page.Route("https://youtu.be/([A-Za-z0-9_\\-]*)", videoPage);
+new page.Route("http://www\.youtube\.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
+new page.Route("https://www\.youtube\.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
+new page.Route("http://youtube\.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
+new page.Route("https://youtube\.com/watch\\?v=([A-Za-z0-9_\\-]*)", videoPage);
+new page.Route("http://youtu\.be/([A-Za-z0-9_\\-]*)", videoPage);
+new page.Route("https://youtu\.be/([A-Za-z0-9_\\-]*)", videoPage);
