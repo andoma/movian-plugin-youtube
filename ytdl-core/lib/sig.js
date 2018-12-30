@@ -23,7 +23,7 @@ exports.getTokens = function(html5playerfile, options, callback) {
     key = rs[1];
     cachedTokens = cache.get(key);
   } else {
-    console.warn('could not extract html5player key:', html5playerfile);
+    console.log('could not extract html5player key:', html5playerfile);
   }
   if (cachedTokens) {
     callback(null, cachedTokens);
@@ -84,7 +84,7 @@ exports.setDownloadURL = function(format, sig, debug) {
     }
   } else {
     if (debug) {
-      console.warn('download url not found for itag ' + format.itag);
+      console.log('download url not found for itag ' + format.itag);
     }
     return;
   }
@@ -93,7 +93,7 @@ exports.setDownloadURL = function(format, sig, debug) {
     decodedUrl = decodeURIComponent(decodedUrl);
   } catch (err) {
     if (debug) {
-      console.warn('could not decode url: ' + err.message);
+      console.log('could not decode url: ' + err.message);
     }
     return;
   }
