@@ -119,6 +119,7 @@ function gotConfig(id, options, description, config, callback) {
   var myrequest = options.request || request;
   myrequest(url, options.requestOptions, function(err, body) {
     if (err) return callback(err);
+
     var info = querystring.parse(body);
     if (info.status === 'fail') {
       info = config.args;
@@ -145,6 +146,8 @@ function gotConfig(id, options, description, config, callback) {
       .map(function(val) { return parseInt(val, 10); })
       ;
     }
+	
+	info.player_response = JSON.parse(info.player_response);
 
     info.formats = util.parseFormats(info);
     info.description = description;

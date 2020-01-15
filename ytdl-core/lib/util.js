@@ -54,8 +54,12 @@ exports.sortFormats = function(a, b) {
 
   function getBitrate(c) {
     if (c.bitrate) {
-      var s = c.bitrate.split('-');
-      return parseFloat(s[s.length - 1], 10);
+	  if(typeof c.bitrate == "string"){
+		  var s = c.bitrate.split('-');
+		  return parseFloat(s[s.length - 1], 10);
+	  }else{
+		  return parseFloat(c.bitrate);
+	  }
     } else {
       return 0;
     }
@@ -251,21 +255,31 @@ exports.parseFormats = function(info, debug) {
   if (info.adaptive_fmts) {
     formats = formats.concat(info.adaptive_fmts.split(','));
   }
-
+  if (info.player_response.streamingData) {
+    if (info.player_response.streamingData.formats) {
+      formats = formats.concat(info.player_response.streamingData.formats);
+    }
+    if (info.player_response.streamingData.adaptiveFormats) {
+      formats = formats.concat(info.player_response.streamingData.adaptiveFormats);
+    }
+  }
+  
   formats = formats
     .map(function(format) {
-      var data = qs.parse(format);
-      var meta = FORMATS[data.itag];
+      //var data = qs.parse(format);
+	  //console.log(data);
+      var meta = FORMATS[format.itag];
       if (!meta && debug) {
         console.warn('No format metadata for itag ' + data.itag + ' found');
       }
 
       for (var key in meta) {
-        data[key] = meta[key];
+        format[key] = meta[key];
       }
 
-      return data;
+      return format;
     });
+	
   delete info.url_encoded_fmt_stream_map;
   delete info.adaptive_fmts;
 

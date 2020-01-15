@@ -273,14 +273,16 @@ function videoPage(page, id) {
     }
 
     var url = info.formats[0].url;
-    var mimetype = (info.formats[0].type ? info.formats[0].type.split(';')[0] : '');  
+    var mimetype = (info.formats[0].mimeType ? info.formats[0].mimeType.split(';')[0] : '');
     if (!mimetype)
         url = 'hls:' + url;
+	
+	thumbs = info.player_response.videoDetails.thumbnail.thumbnails;
     
     var videoParams = {
-      title: unescape(info.title),
-      icon: info.iurlmaxres,
-      canonicalUrl: PREFIX + ':video:' + info.video_id,
+      title: unescape(info.player_response.videoDetails.title),
+      icon: thumbs[thumbs.length-1].url,
+      canonicalUrl: PREFIX + ':video:' + info.player_response.videoDetails.videoId,
       sources: [{
         url: url,
         mimetype: mimetype,
