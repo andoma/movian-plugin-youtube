@@ -3,7 +3,7 @@ var http = require('showtime/http');
 var credentials = require('showtime/store').create('credentials');
 var io = require('native/io'); // XXX: Bad to require('native/')
 
-var KEY = 'AIzaSyDAzVSvPLhABsnUFHjWSm-gtE6xahrIGzo';
+var KEY = 'AIzaSyAZMIkfbAVZZopeIRlhOGnV91zk3t5dH3M';
 var CLIENT_ID = '1014238784586-9ruvt1i4kq5j6h7i2954juse5k7vgbcc.apps.googleusercontent.com'
 
 //-----------------------------------------------------------------------
